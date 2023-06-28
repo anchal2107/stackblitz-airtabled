@@ -1,15 +1,63 @@
 const Airtable = require('airtable');
 import { airtable_key, airtable_endutl } from './config';
-const base = new Airtable({ apiKey: airtable_key }).base('YOUR_BASE_ID');
-
+const YOUR_BASE_ID ='appJbmgqjRnOBPg2d'
+const API_KEY ='keyOg6Kc4yKqjdVBQ'
+const TOKEN_ID='patYQGCEh3dRxylt6.df0bdb51183f3997b511125793ec775a7211f9b8fed0c27ee740cbcae193c7a5'
+// Airtable.configure({ apiKey: airtable_key })
+const base = new Airtable({ apiKey: API_KEY }).base(YOUR_BASE_ID);
+// const base = new Airtable({endpointUrl: 'https://api-airtable-com-8hw7i1oz63iz.runscope.net/'})
 // Create a record
 async function createRecord(table, data) {
   try {
-    const createdRecord = await base(table).create(data);
-    console.log('Record created:', createdRecord);
-    return createdRecord;
+    // const createdRecord = await base(table).create(data);
+        // return createdRecord;
+const resultExits = await checkRecord(table, data)
+if(!resultExits && resultExits !== undefined){
+   const result = await  base(table).create(data)
+   console.error(result);
+  } 
+}catch (error) {
+  console.error('Error creating record:', error);
+  throw error;
+}
+}
+
+function formatDataToFilter(data) {
+  const filterClauses = Object.entries(data).map(([field, value]) => `{${field}} = "${value}"`);
+  return filterClauses.join(' AND ');
+}
+function createFilterFormula(data) {
+  const filterConditions = Object.entries(data).map(([field, value]) => {
+    return `{${field}} = "${value}"`;
+  });
+  
+  const filterFormula = `AND(${filterConditions.join(', ')})`;
+  
+  return filterFormula;
+}
+
+// check if recored exist
+// check if record exists
+async function checkRecord(table, data) {
+  try {
+    const filterData = createFilterFormula(data);
+
+    const records = await base(table).select({
+      maxRecords: 1,
+      filterByFormula: filterData,
+    }).firstPage();
+
+    if (records.length > 0) {
+      // Record already exists
+      console.log('Record already exists:', records[0].getId());
+      return true;
+    } else {
+      // Record does not exist
+      console.log('Record does not exist');
+      return false;
+    }
   } catch (error) {
-    console.error('Error creating record:', error);
+    console.error('Error checking record:', error);
     throw error;
   }
 }
@@ -62,6 +110,12 @@ async function deleteRecord(table, recordId) {
     throw error;
   }
 }
+export {
+  createRecord,
+  readRecords,
+  updateRecord,
+  deleteRecord,
+};  
 
 // Usage example
 // async function main() {
